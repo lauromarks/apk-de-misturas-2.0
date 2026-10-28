@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f4c5c">
+<title>Calculadora de Misturas - VJET</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#f3f5f6; --card:#fff; --ink:#14232b; --muted:#5d6f78; --line:#dde4e8;
+  --brand:#0f4c5c; --brand-ink:#fff; --accent:#e36414; --ok:#1b7f4b; --bad:#c0392b; --warn-bg:#fff3e0; --chip:#e7eef1;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#10181c; --card:#18242a; --ink:#e8eef1; --muted:#93a5ae; --line:#2a3a42;
+    --brand:#4fb0c6; --brand-ink:#08222a; --accent:#ff9248; --ok:#4cd08a; --bad:#ff7b6b; --warn-bg:#3a2a14; --chip:#22333b; }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding:0 16px;max-width:640px;margin:0 auto}
+header{padding:calc(14px + env(safe-area-inset-top)) 0 8px}
+h1{font-size:20px;margin:0}
+h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.chips{display:flex;flex-direction:column;gap:6px}
+.chip{border:2px solid transparent;background:var(--chip);color:var(--ink);font:inherit;font-weight:700;
+  width:100%;text-align:left;min-height:48px;border-radius:12px;padding:0 14px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--brand);color:var(--brand-ink)}
+.recipe{margin:10px 2px 0;color:var(--muted);font-size:14px}
+.warn{background:var(--warn-bg);border:1px solid var(--accent);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px}
+input{font:inherit;color:var(--ink)}
+.search{width:100%;min-height:46px;border:1px solid var(--line);border-radius:12px;padding:0 14px;background:var(--card);margin-bottom:8px}
+.frasco{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.frasco:first-child{border-top:0}
+.frasco .nome{flex:1;min-width:0}
+.frasco .nome b{display:block;font-weight:600;overflow-wrap:anywhere}
+.frasco .nome small{color:var(--muted)}
+.frasco.on .nome b{color:var(--brand)}
+.step{display:flex;align-items:center;gap:4px}
+.step button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--chip);color:var(--ink);font-size:22px;font-weight:700;cursor:pointer}
+.step input{width:56px;height:44px;text-align:center;border:1px solid var(--line);border-radius:12px;background:var(--card);font-weight:700}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.row input{width:110px;height:46px;text-align:right;border:1px solid var(--line);border-radius:12px;padding:0 12px;background:var(--card)}
+.btn{min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--chip);color:var(--ink);font:inherit;font-weight:600;padding:0 14px;cursor:pointer}
+table{width:100%;border-collapse:collapse}
+th{font-size:12px;color:var(--muted);font-weight:600;text-align:right;padding:0 0 6px}
+th:first-child,td:first-child{text-align:left}
+td{padding:9px 0;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+td.big{font-size:20px;font-weight:800;color:var(--brand)}
+tr.total td{font-weight:800}
+.hero{background:var(--brand);color:var(--brand-ink);border-radius:14px;padding:14px 16px;margin-top:16px}
+.hero .lbl{font-size:13px;opacity:.85}
+.hero .val{font-size:34px;font-weight:800;line-height:1.1}
+.hero.over{background:var(--bad);color:#fff}
+.neg{color:var(--bad);font-weight:700}.pos{color:var(--ok)}
+details summary{cursor:pointer;font-weight:700;min-height:32px}
+.note{color:var(--muted);font-size:13px;margin:8px 0 0}
+.stock td input{width:90px;height:40px;text-align:right;border:1px solid var(--line);border-radius:10px;padding:0 8px;background:var(--card)}
+#bar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;gap:12px;
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--brand);color:var(--brand-ink);font-size:18px;z-index:5}
+#bar[hidden]{display:none}
+#bar button{background:rgba(255,255,255,.2);color:inherit;border:0;border-radius:10px;min-height:40px;padding:0 14px;font:inherit;font-size:15px;font-weight:700}
+body{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+.credit{text-align:center;color:var(--muted);font-size:12px;margin:22px 0 0;opacity:.85}
+</style>
+</head>
+<body>
+<header><h1>Calculadora de Misturas - VJET</h1></header>
+
+<h2>1 · Mistura</h2>
+<div class="card">
+  <div class="chips" id="chips" role="group" aria-label="Mistura"></div>
+  <div class="recipe" id="recipe"></div>
+  <div class="warn" id="recipeWarn" hidden></div>
+</div>
+
+<h2>2 · Frascos</h2>
+<input class="search" id="search" type="search" placeholder="Buscar frasco…" autocomplete="off">
+<div class="card" id="frascos"></div>
+<div style="display:flex;gap:8px;margin-top:8px;align-items:center;justify-content:space-between">
+  <label class="row" style="flex:1;margin:0"><span>Litros avulsos (opcional)</span>
+    <input id="extra" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></label>
+</div>
+<div style="margin-top:8px"><button class="btn" id="limpar">Limpar quantidades</button></div>
+
+<h2>3 · Resultado</h2>
+<div class="hero" id="hero"><div class="lbl">Volume total da mistura</div><div class="val" id="total">0 L</div><div class="lbl" id="tank"></div></div>
+
+<div class="card" style="margin-top:12px">
+  <table id="res">
+    <thead><tr><th>Matéria-prima</th><th>Exato (L)</th><th>Aproximado (L)</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="note">Aproximado: MEK e acetona arredondam para baixo; os demais para cima.</p>
+</div>
+<div class="card" id="qb" style="margin-top:12px" hidden>
+  <div class="row"><span>Tinta QB Code (<span id="qbPct"></span> do volume)</span><b id="qbVal" style="font-size:20px;color:var(--brand)"></b></div>
+</div>
+
+<h2>Granel</h2>
+<div class="card">
+  <details>
+    <summary>Estoque atual e restante após esta mistura</summary>
+    <table class="stock" id="stock" style="margin-top:8px">
+      <thead><tr><th>Item</th><th>Atual (L)</th><th>Restante (L)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="note">O estoque atual fica salvo neste aparelho. Restante = atual − aproximado da mistura. Campo vazio = sem controle.</p>
+  </details>
+</div>
+
+<footer class="credit">Calculadora de Misturas - App criado e desenvolvido por Lauro Vieira</footer>
+
+<div id="bar" hidden><span>Total <b id="barTotal"></b></span><button id="barGo">Ver resultado ↓</button></div>
+<script src="calc.js"></script>
+<script>
+(function(){
+  const C = window.Calc;
+  const $ = (id)=>document.getElementById(id);
+  const fmt = (x,d=2)=>Number(x).toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:d});
+  const store = {
+    get(k,def){ try{ const v=localStorage.getItem(k); return v===null?def:JSON.parse(v);}catch(e){return def;} },
+    set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+  };
+
+  const state = { mistura: store.get("mistura","M1"), qtds:{}, extra:0 };
+  if(!C.RECEITAS[state.mistura]) state.mistura="M1";
+  // Estoque (granel). Valores iniciais = planilha.
+  const stockItems = ["MEK","ACETONA","ÁLCOOL","ETILA","METANOL","TINTA BASE MEK"];
+  const stock = Object.assign({MEK:1034,ACETONA:145,"ÁLCOOL":382,ETILA:142,METANOL:null,"TINTA BASE MEK":100}, store.get("granel",{}));
+
+  // Mistura
+  const chips=$("chips");
+  Object.keys(C.RECEITAS).forEach(m=>{
+    const b=document.createElement("button"); b.className="chip"; b.textContent=C.NOMES[m]; b.dataset.m=m;
+    b.onclick=()=>{state.mistura=m; store.set("mistura",m); render();};
+    chips.appendChild(b);
+  });
+
+  // Frascos
+  const list=$("frascos");
+  const rows = C.FRASCOS.map(f=>{
+    const el=document.createElement("div"); el.className="frasco";
+    el.innerHTML='<div class="nome"><b></b><small></small></div><div class="step"><button aria-label="menos">−</button><input type="number" inputmode="numeric" min="0" step="1" placeholder="0"><button aria-label="mais">+</button></div>';
+    el.querySelector("b").textContent=f.nome;
+    el.querySelector("small").textContent=fmt(f.litros,3)+" L";
+    const inp=el.querySelector("input"), [minus,plus]=el.querySelectorAll("button");
+    const set=(n)=>{ n=Math.max(0,Math.floor(n)||0); if(n) state.qtds[f.id]=n; else delete state.qtds[f.id]; inp.value=n||""; render(); };
+    minus.onclick=()=>set((state.qtds[f.id]||0)-1);
+    plus.onclick=()=>set((state.qtds[f.id]||0)+1);
+    inp.oninput=()=>{ const n=Math.max(0,Math.floor(Number(inp.value))||0); if(n) state.qtds[f.id]=n; else delete state.qtds[f.id]; render(); };
+    list.appendChild(el);
+    return {f,el,inp};
+  });
+  $("search").oninput=(e)=>{
+    const q=e.target.value.trim().toLowerCase();
+    rows.forEach(r=>r.el.style.display = !q || r.f.nome.toLowerCase().includes(q) ? "" : "none");
+  };
+  $("extra").oninput=(e)=>{ state.extra=Math.max(0,Number(String(e.target.value).replace(",","."))||0); render(); };
+  $("limpar").onclick=()=>{ state.qtds={}; state.extra=0; $("extra").value=""; rows.forEach(r=>r.inp.value=""); render(); };
+
+  // Estoque
+  const stockBody=$("stock").querySelector("tbody");
+  const stockCells={};
+  stockItems.forEach(k=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML='<td></td><td><input type="number" inputmode="decimal" step="any"></td><td></td>';
+    tr.children[0].textContent=k;
+    const inp=tr.querySelector("input"); inp.value=stock[k]===null?"":stock[k];
+    inp.oninput=()=>{ const t=String(inp.value).trim(); stock[k]=t===""?null:(Number(t.replace(",","."))||0); store.set("granel",stock); render(); };
+    stockBody.appendChild(tr); stockCells[k]=tr.children[2];
+  });
+
+  function render(){
+    const r=C.calcular({qtds:state.qtds,extra:state.extra,mistura:state.mistura});
+    chips.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===state.mistura));
+    const rec=C.RECEITAS[state.mistura];
+    $("recipe").textContent=C.MATERIAS.filter(m=>rec[m]>0).map(m=>m+" "+fmt(rec[m]*100,1)+"%").join(" · ");
+    const w=$("recipeWarn");
+    if(Math.abs(r.somaReceita-1)>1e-9){ w.hidden=false; w.textContent="Atenção: as proporções de "+state.mistura+" somam "+fmt(r.somaReceita*100,1)+"% (não 100%). Confira a receita."; } else w.hidden=true;
+
+    $("bar").hidden=!r.total; $("barTotal").textContent=fmt(r.total,3)+" L";
+    rows.forEach(x=>x.el.classList.toggle("on",!!state.qtds[x.f.id]));
+
+    $("total").textContent=fmt(r.total,3)+" L";
+    const semTanque=C.SEM_TANQUE.includes(state.mistura);
+    const over=!semTanque && r.total>C.TANQUE_L;
+    $("hero").classList.toggle("over",over);
+    $("tank").textContent= semTanque ? "" : over ? "Acima da capacidade do tanque ("+C.TANQUE_L+" L)" : (r.total? "Tanque de "+C.TANQUE_L+" L · "+fmt(r.total/C.TANQUE_L*100,0)+"% cheio":"");
+
+    const tb=$("res").querySelector("tbody"); tb.innerHTML="";
+    C.MATERIAS.filter(m=>rec[m]>0).forEach(m=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML='<td></td><td></td><td class="big"></td>';
+      tr.children[0].textContent=m; tr.children[1].textContent=fmt(r.exato[m],3); tr.children[2].textContent=fmt(r.aprox[m],0);
+      tb.appendChild(tr);
+    });
+    const tt=document.createElement("tr"); tt.className="total";
+    tt.innerHTML='<td>Total</td><td></td><td></td>'; tt.children[1].textContent=fmt(r.totalExato,3); tt.children[2].textContent=fmt(r.totalAprox,0);
+    tb.appendChild(tt);
+
+    const q=C.TINTA_QB[state.mistura];
+    $("qb").hidden=!q;
+    if(q){ $("qbPct").textContent=fmt(q*100,1)+"%"; $("qbVal").textContent=fmt(r.tintaQB_mL,1)+" mL"; }
+
+    stockItems.forEach(k=>{
+      if(stock[k]===null){ stockCells[k].textContent="—"; stockCells[k].className=""; return; }
+      const rest=Math.round((stock[k]-(r.aprox[k]||0))*1000)/1000;
+      stockCells[k].textContent=fmt(rest,3); stockCells[k].className=rest<0?"neg":"";
+    });
+  }
+  $("barGo").onclick=()=>$("hero").scrollIntoView({behavior:"smooth"});
+  render();
+  if("serviceWorker" in navigator && !window.Capacitor && location.protocol.startsWith("http")){
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>
